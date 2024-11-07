@@ -1,4 +1,4 @@
-import axios from "axios";
+import apiClient from "../../utils/api-client";
 import React, { useEffect, useState } from "react";
 import Loader from "./../common/Loader";
 
@@ -6,14 +6,14 @@ const Sellers = () => {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState("");
-  const [seller, setSeller] = useState([]);
+  const [sellers, setSellers] = useState([]);
   useEffect(() => {
     // fetchSeller();
     setIsLoading(true);
-    axios
-      .get("https://jsonplaceholder.typicode.com/users")
+    apiClient
+      .get("/users")
       .then((res) => {
-        setSeller(res.data);
+        setSellers(res.data);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -25,8 +25,8 @@ const Sellers = () => {
   //   const fetchSeller = async () => {
   //     setIsLoading(true);
   //     try {
-  //       const res = await axios.get(
-  //         "https://jsonplaceholder.typicode.com/userrs"
+  //       const res = await apiClient.get(
+  //         ".com/userrs"
   //       );
   //       setSeller(res.data);
   //       setIsLoading(false);
@@ -38,25 +38,34 @@ const Sellers = () => {
   const addSeller = () => {
     const newseller = {
       name,
-      id: seller.length + 1,
+      id: sellers.length + 1,
     };
-    setSeller([newseller, ...seller]);
-    axios
-      .post("https://jsonplaceholder.typicode.com/users", newseller)
-      .then((res) => setSeller([res.data, ...seller]))
+    setSellers([newseller, ...sellers]);
+    apiClient
+      .post("/users", newseller)
+      .then((res) => setSellers([res.data, ...sellers]))
       .catch((err) => {
         setErrors(err.message);
-        setSeller(seller);
+        setSellers(sellers);
       });
   };
   const deleteSeller = (id) => {
-    setSeller(seller.filter((s) => s.id !== id));
-    axios
-      .delete(`https://jsonplaceholder.typicode.com/users/${id}`)
-      .catch((err) => {
-        setErrors(err.message);
-        setSeller(seller);
-      });
+    setSellers(sellers.filter((s) => s.id !== id));
+    apiClient.delete(`/users/${id}`).catch((err) => {
+      setErrors(err.message);
+      setSellers(sellers);
+    });
+  };
+  const updateSeller = (seller) => {
+    const updateSeller = {
+      ...seller,
+      name: seller.name + " Updated ",
+    };
+    setSellers(sellers.map((s) => (s.id === seller.id ? updateSeller : s)));
+    apiClient.patch(`/users/${seller.id}`, updateSeller).catch((err) => {
+      setErrors(err.message);
+      setSellers(sellers);
+    });
   };
 
   return (
@@ -68,9 +77,12 @@ const Sellers = () => {
       {errors && <em>{errors}</em>}
       <table>
         <tbody>
-          {seller.map((seller) => (
+          {sellers.map((seller) => (
             <tr key={seller.id}>
               <td>{seller.name}</td>
+              <td>
+                <button onClick={() => updateSeller(seller)}>Update</button>
+              </td>
               <td>
                 <button onClick={() => deleteSeller(seller.id)}>Delete</button>
               </td>
